@@ -10,6 +10,10 @@ required_apps = ["erpnext"]
 # Loaded into the Point of Sale page after ERPNext's own script (no asset build needed).
 page_js = {"point-of-sale": "public/js/point_of_sale.js"}
 
+# Loaded on every desk page: keeps cashiers on the Point of Sale. Served from /assets, so the app's
+# public folder must be reachable there (the Docker setup mounts it into the web server).
+app_include_js = ["/assets/retail_pos_india/js/cashier_guard.js"]
+
 # Card and UPI detail fields on Sales Invoice, and their place on the POS payment screen.
 after_install = "retail_pos_india.setup.install.after_install"
 after_migrate = "retail_pos_india.setup.install.after_install"
