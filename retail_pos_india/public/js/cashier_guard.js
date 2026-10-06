@@ -39,7 +39,8 @@
 		frappe.set_route("point-of-sale");
 	};
 
+	// Only once the router has read the URL and shown a page. Checking at boot (before that) saw an
+	// empty route and sent a cashier opening an allowed page, e.g. POS Closing Entry, to the POS.
 	$(document).on("page-change", guard);
 	frappe.router?.on?.("change", guard);
-	$(() => setTimeout(guard, 0));
 })();
