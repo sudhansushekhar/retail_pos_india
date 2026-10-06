@@ -125,6 +125,11 @@
 			for (const df of this.invoice_fields) {
 				if (frm.doc[df.fieldname]) group.set_value(df.fieldname, frm.doc[df.fieldname]);
 			}
+			// Name every field after its label for screen readers (and tests: getByLabel). The
+			// FieldGroup draws the label as text that is not linked to its input.
+			for (const df of this.invoice_fields) {
+				group.fields_dict[df.fieldname]?.$input?.attr("aria-label", __(df.label));
+			}
 			// The last-4 box takes at most 4 characters, the UPI ID 12 (the server also checks both).
 			group.fields_dict.rpi_card_last4?.$input.attr({ maxlength: 4, inputmode: "numeric" });
 			group.fields_dict.rpi_upi_reference?.$input.attr({ maxlength: 12, inputmode: "numeric" });
@@ -188,6 +193,19 @@
 		const erpnext_bind_events = Payment.bind_events;
 		Payment.bind_events = function (...args) {
 			const out = erpnext_bind_events.apply(this, args);
+			// ERPNext switches a selected tile OFF when it is tapped again, so the number pad then
+			// types nothing. Keep it selected instead (this runs first: the capture phase) and let
+			// the tap start a new amount.
+			this.$payment_modes.get(0).addEventListener(
+				"click",
+				(e) => {
+					const tile = e.target.closest(".mode-of-payment");
+					if (!tile || !tile.classList.contains("border-primary")) return;
+					e.stopPropagation();
+					this.__rpi_entry = null;
+				},
+				true
+			);
 			this.$component.on("click", ".mode-of-payment", () => {
 				this.__rpi_entry = null;
 			});
