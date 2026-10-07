@@ -1,5 +1,7 @@
 # Retail POS India
 
+[![Retail POS India · unit tests](https://github.com/sudhansushekhar/retail_pos_india/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/sudhansushekhar/retail_pos_india/actions/workflows/unit-tests.yml)
+
 A Frappe app that adapts ERPNext v16's **Point of Sale** for Indian retail: whole-rupee number pad,
 UPI and card (incl. RuPay) payment details, a cash-only opening float, and a layout that fits laptop screens.
 
@@ -103,7 +105,7 @@ schtasks /create /tn "ERPNext backup" /sc daily /st 21:00 /tr "cmd /c cd /d D:\C
 | `retail_pos_india/public/js/point_of_sale.js` | Number pad, card/UPI fields and when to show them, payment tiles, layout; applied to ERPNext's POS classes when the page loads |
 | `retail_pos_india/payment_details.py` | The checks: last 4 = exactly 4 digits, no card numbers anywhere, UTR = 12 digits, required at Complete Order, cleared when that mode was not used |
 | `retail_pos_india/setup/install.py` | Adds the four fields to Sales Invoice and to **POS Settings → Invoice Fields** (what the payment screen shows); removes them on uninstall |
-| `retail_pos_india/tests/` | 15 unit tests: `npm run erp:test` (Docker), or `bench --site <site> run-tests --app retail_pos_india`; CI runs them on every pull request (`.github/workflows/ci.yml`) |
+| `retail_pos_india/tests/` | 15 unit tests: `npm run erp:test` (Docker), or `bench --site <site> run-tests --app retail_pos_india`; CI runs them on every pull request (`.github/workflows/unit-tests.yml`) |
 | `docker/`, `scripts/`, `package.json` | The local ERPNext in Docker and its commands (above) |
 
 No asset build is needed: ERPNext reads the POS script straight from the app. The cashier guard is

@@ -1,10 +1,10 @@
-# CI: every pull request, every push to main, or by hand (Actions → CI → Run workflow).
+# CI: every pull request, every push to main, or by hand (Actions → Retail POS India · unit tests → Run workflow).
 #
 # Starts ERPNext with this app in Docker (the same `npm run erp:*` commands as on a laptop), installs
 # the app, and runs its unit tests (retail_pos_india/tests: payment details, card and UPI rules).
 # The browser tests live in erpnext-playwright-ai-test-automation and run there.
 # Credentials are the local Docker values in docker/pwd.yml: the site exists only inside the job.
-name: CI
+name: Retail POS India · unit tests
 
 on:
   pull_request:
@@ -18,6 +18,7 @@ concurrency:
 
 jobs:
   unit-tests:
+    name: Unit tests (ERPNext in Docker)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
