@@ -1,0 +1,15 @@
+{
+  "name": "retail-pos-india-dev",
+  "private": true,
+  "description": "Run ERPNext with Retail POS India locally in Docker (no dependencies to install)",
+  "scripts": {
+    "erp:up": "docker compose -p erpnext-qa -f docker/pwd.yml -f docker/apps.yml up -d && docker compose -p erpnext-qa -f docker/pwd.yml -f docker/apps.yml restart frontend",
+    "erp:app": "node scripts/install-app.js",
+    "erp:down": "docker compose -p erpnext-qa -f docker/pwd.yml -f docker/apps.yml down",
+    "erp:reset": "node scripts/reset.js",
+    "erp:backup": "node scripts/backup.js",
+    "erp:restore": "node scripts/restore.js",
+    "erp:logs": "docker compose -p erpnext-qa -f docker/pwd.yml -f docker/apps.yml logs -f create-site backend",
+    "erp:test": "docker exec erpnext-qa-backend-1 bench --site frontend set-config allow_tests true && docker exec erpnext-qa-backend-1 bench --site frontend run-tests --app retail_pos_india"
+  }
+}

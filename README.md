@@ -31,10 +31,68 @@ bench get-app <this repository's URL>
 bench --site <site> install-app retail_pos_india
 ```
 
-With the Docker setup of [`erpnext-playwright-ai-test-automation`](../erpnext-playwright-ai-test-automation):
-clone this repository next to it (`CareerPath/retail_pos_india` beside
-`CareerPath/erpnext-playwright-ai-test-automation`); its `npm run erp:up` mounts the app and
-`npm run erp:apps` installs it.
+Or run ERPNext with this app locally in Docker: see the next section.
+
+## Run ERPNext with this app locally (Docker)
+
+This repository also holds a local ERPNext v16 in Docker with the app mounted, for development,
+demos and the tests in [erpnext-playwright-ai-test-automation](https://github.com/sudhansushekhar/erpnext-playwright-ai-test-automation).
+Needs **Docker Desktop** (running; at least 4 GB of memory) and **Node.js 20+** (for the commands
+below; nothing to `npm install`).
+
+```bash
+git clone https://github.com/sudhansushekhar/retail_pos_india.git
+cd retail_pos_india
+npm run erp:up      # first start: downloads about 2 GB and creates the site, 5-15 minutes
+curl http://localhost:8080/api/method/ping   # ready when it answers {"message":"pong"}
+npm run erp:app     # install the app on the site (safe to run again: migrates)
+```
+
+Sign in at http://localhost:8080 as **Administrator / admin** (local only). The site is empty
+until something fills it: the test repository's seed builds a company, GST, items, users and tills.
+
+| Command | What it does |
+|---|---|
+| `npm run erp:up` | Start ERPNext (keeps its data), with this app mounted |
+| `npm run erp:app` | Install the app on the site, or migrate it after a change |
+| `npm run erp:down` | Stop ERPNext (keeps its data) |
+| `npm run erp:reset` | Stop ERPNext and **delete its data** (asks you to type `RESET` first); the next `erp:up` builds a fresh site |
+| `npm run erp:backup` | Full backup of the site into a dated folder (below) |
+| `npm run erp:restore` | Put a backup back (asks you to type `RESTORE` first) |
+| `npm run erp:logs` | Follow the site-creation and server logs |
+| `npm run erp:test` | Run the app's unit tests on the site |
+
+The site's data lives in **Docker volumes**, not in this folder: deleting the folder keeps it;
+`npm run erp:reset` deletes it.
+
+| Symptom | Fix |
+|---|---|
+| **port 8080 is already allocated** | Something else uses 8080. Stop it, or change `"8080:8080"` in `docker/pwd.yml` |
+| `ping` does not answer after 15 minutes | `npm run erp:logs`; if the site creation failed, `npm run erp:reset` then `npm run erp:up` |
+| **502 Bad Gateway** after `erp:up` | `docker restart erpnext-qa-frontend-1` (`erp:up` does this for you) |
+| A change does not show | Python or hooks: `docker restart erpnext-qa-backend-1`. The POS script: `docker exec erpnext-qa-backend-1 bench --site frontend clear-cache`, then **Ctrl+Shift+R** in the browser |
+
+### Backup and restore
+
+```bash
+npm run erp:backup                         # the whole site: database, files, settings
+npm run erp:restore                        # the newest backup
+npm run erp:restore -- 2026-10-07_005346   # a given one
+```
+
+A backup is a dated folder in `../erpnext-backups` (or `BACKUP_DIR` in `.env`; copy `.env.example`):
+the database, attached files, the site config **with its encryption key** and a `manifest.json`.
+⚠ Keep it private, never in a public repository. The newest 30 are kept (`BACKUP_KEEP`). Restore
+**replaces everything on the site**, then migrates and clears the cache.
+
+**In Google Drive:** install Google Drive for desktop, then set `BACKUP_DIR=G:\My Drive\ERPNext-Backups`
+in `.env`. On another laptop: set up as above, then `npm run erp:restore`.
+
+**Every evening (Windows, optional):**
+
+```bash
+schtasks /create /tn "ERPNext backup" /sc daily /st 21:00 /tr "cmd /c cd /d D:\CareerPath\retail_pos_india && npm run erp:backup >> ..\erpnext-backups\backup.log 2>&1"
+```
 
 ## How it works
 
@@ -45,7 +103,8 @@ clone this repository next to it (`CareerPath/retail_pos_india` beside
 | `retail_pos_india/public/js/point_of_sale.js` | Number pad, card/UPI fields and when to show them, payment tiles, layout; applied to ERPNext's POS classes when the page loads |
 | `retail_pos_india/payment_details.py` | The checks: last 4 = exactly 4 digits, no card numbers anywhere, UTR = 12 digits, required at Complete Order, cleared when that mode was not used |
 | `retail_pos_india/setup/install.py` | Adds the four fields to Sales Invoice and to **POS Settings → Invoice Fields** (what the payment screen shows); removes them on uninstall |
-| `retail_pos_india/tests/` | 15 unit tests: `bench --site <site> run-tests --app retail_pos_india` |
+| `retail_pos_india/tests/` | 15 unit tests: `npm run erp:test` (Docker), or `bench --site <site> run-tests --app retail_pos_india`; CI runs them on every pull request (`.github/workflows/ci.yml`) |
+| `docker/`, `scripts/`, `package.json` | The local ERPNext in Docker and its commands (above) |
 
 No asset build is needed: ERPNext reads the POS script straight from the app. The cashier guard is
 served from `/assets/retail_pos_india/`, so the app's `public` folder must be reachable there (the

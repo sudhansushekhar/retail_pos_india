@@ -1,0 +1,48 @@
+# CI: every pull request, every push to main, or by hand (Actions → CI → Run workflow).
+#
+# Starts ERPNext with this app in Docker (the same `npm run erp:*` commands as on a laptop), installs
+# the app, and runs its unit tests (retail_pos_india/tests: payment details, card and UPI rules).
+# The browser tests live in erpnext-playwright-ai-test-automation and run there.
+# Credentials are the local Docker values in docker/pwd.yml: the site exists only inside the job.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Start ERPNext with this app
+        run: npm run erp:up
+
+      - name: Wait for the site (created on first start, a few minutes)
+        run: |
+          # create-site runs once and exits 0 when the site and ERPNext are installed.
+          code=$(timeout 900 docker wait erpnext-qa-create-site-1)
+          if [ "$code" != "0" ]; then echo "site creation failed (exit $code)"; exit 1; fi
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/api/method/ping | grep -q pong; then echo "ready"; exit 0; fi
+            sleep 10
+          done
+          echo "the site does not answer"; exit 1
+
+      - name: Install the app on the site
+        run: npm run erp:app
+
+      - name: Unit tests
+        run: npm run erp:test
+
+      - name: ERPNext logs (on failure)
+        if: failure()
+        run: docker compose -p erpnext-qa -f docker/pwd.yml -f docker/apps.yml logs --tail=200 create-site backend
