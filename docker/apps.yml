@@ -1,0 +1,56 @@
+# This app, mounted into the official ERPNext containers (added on top of pwd.yml).
+#
+# The repository folder (..) is mounted at apps/retail_pos_india and put on PYTHONPATH, so the
+# containers run the code straight from it: no custom image to build, and an edit is live after a
+# restart. `ls apps > sites/apps.txt` in the configurator lists it for bench.
+
+x-apps: &apps
+  volumes:
+    - sites:/home/frappe/frappe-bench/sites
+    - logs:/home/frappe/frappe-bench/logs
+    - ..:/home/frappe/frappe-bench/apps/retail_pos_india:ro
+  environment: &apps-env
+    PYTHONPATH: /home/frappe/frappe-bench/apps/retail_pos_india
+
+services:
+  configurator:
+    <<: *apps
+    environment:
+      <<: *apps-env
+      DB_HOST: db
+      DB_PORT: "3306"
+      REDIS_CACHE: redis-cache:6379
+      REDIS_QUEUE: redis-queue:6379
+      SOCKETIO_PORT: "9000"
+  create-site:
+    <<: *apps
+  backend:
+    <<: *apps
+    environment:
+      <<: *apps-env
+      DB_HOST: db
+      DB_PORT: "3306"
+      MYSQL_ROOT_PASSWORD: admin
+      MARIADB_ROOT_PASSWORD: admin
+  queue-long:
+    <<: *apps
+    environment:
+      <<: *apps-env
+      FRAPPE_REDIS_CACHE: redis://redis-cache:6379
+      FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
+  queue-short:
+    <<: *apps
+    environment:
+      <<: *apps-env
+      FRAPPE_REDIS_CACHE: redis://redis-cache:6379
+      FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
+  scheduler:
+    <<: *apps
+  # The web server (nginx) serves /assets/<app>/... from /home/frappe/frappe-bench/assets, a folder
+  # inside its own container (sites/assets links there, it is not shared). Mount the app's public
+  # folder straight there, so app_include_js files are served; no `bench build` needed.
+  frontend:
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+      - ../retail_pos_india/public:/home/frappe/frappe-bench/assets/retail_pos_india:ro
