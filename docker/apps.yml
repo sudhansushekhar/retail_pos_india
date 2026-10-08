@@ -28,6 +28,9 @@ services:
     <<: *apps
     environment:
       <<: *apps-env
+      # Web server processes (the image's default is 2). Tests run 4 browsers at once and the POS
+      # screen loads about 90 requests: with 2, requests queued and every test took twice as long.
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-5}
       DB_HOST: db
       DB_PORT: "3306"
       MYSQL_ROOT_PASSWORD: admin
