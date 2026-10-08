@@ -101,6 +101,11 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --skip-character-set-client-handshake
+      # MariaDB 11.6+ turns this on by default: two counters saving an invoice at the same moment then
+      # fail (QueryDeadlockError 1020 "Record has changed since last read in table 'tabSeries'"),
+      # because Frappe locks the invoice-number counter and expects the second save to wait. Off,
+      # it waits and gets the next number. Found by the parallel test runs; set it on a real server too.
+      - --innodb-snapshot-isolation=OFF
     environment:
       MYSQL_ROOT_PASSWORD: admin
       MARIADB_ROOT_PASSWORD: admin

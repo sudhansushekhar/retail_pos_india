@@ -4,9 +4,9 @@
  * Loaded on every desk page (hooks.py: app_include_js). For a user who is a Cashier and has no
  * manager or admin role, any desk page other than the ones the POS flow needs sends them back to
  * the Point of Sale. Allowed: the Point of Sale page, the POS Opening Entry and POS Closing Entry
- * forms (opening and closing the till), and print views (receipts).
+ * forms (opening and closing the counter), and print views (receipts).
  *
- * This keeps cashiers on the till; it is not a security boundary. What a cashier may read or
+ * This keeps cashiers on the counter; it is not a security boundary. What a cashier may read or
  * change is still decided by their roles' permissions on the server.
  */
 (() => {
